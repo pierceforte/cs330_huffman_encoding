@@ -1,7 +1,7 @@
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.*;
 import java.lang.Math;
+import java.util.*;
 
 public class Huffman {
 
@@ -22,7 +22,7 @@ public class Huffman {
         }
 
         public int compare(Node b) {
-            // prefer lower freq then prefer lower timestamp
+            // prefer lower freq then prefer higher timestamp
             if(freq > b.freq){
                 return 1;
             } else if (b.freq > freq){
@@ -47,7 +47,6 @@ public class Huffman {
         public String freqToString() {
             return String.format("%.2f", freq);
         }
-        
 
         /**
          * From https://stackoverflow.com/a/19484210
@@ -62,10 +61,12 @@ public class Huffman {
                 left.printTree(out, false, "");
             }
         }
+
         private void printNodeValue(OutputStreamWriter out) throws IOException {
             out.write(toString());
             out.write('\n');
         }
+
         // use string and not stringbuffer on purpose as we need to change the indent at each recursion
         private void printTree(OutputStreamWriter out, boolean isRight, String indent) throws IOException {
             if (right != null) {
@@ -90,25 +91,22 @@ public class Huffman {
     }
 
     /**
-     * Generate Huffman encoding tree from map of elements and their corresponding frequency
+     * Generate Huffman encoding tree from map of elements and their corresponding frequency.
+     * Algorithm from Algorithms by Dasgupta et. al. page 155.
      */
     public static Node encode(Map<Character, Double> freqs){
-
         Set<Node> nodes = new HashSet<>();
         for (char c : freqs.keySet()) {
             Node cur = new Node(c, freqs.get(c), System.nanoTime());
             nodes.add(cur);
         }
 
-        int n = freqs.size();
-
         PriorityQueue<Node> queue = new PriorityQueue<>((a, b) -> a.compare(b));
-
         queue.addAll(nodes);
-        for (int k = 1; k < n; k++) {
+        for (int k = 1; k < freqs.size(); k++) {
             Node i = queue.remove();
             Node j = queue.remove();
-
+            
             double rootFreq = i.freq + j.freq;
             Node cur = new Node(Node.INTERNAL_NODE_DATA, rootFreq, System.nanoTime());
             
@@ -117,19 +115,6 @@ public class Huffman {
             queue.add(cur);
         }
         return queue.remove();
-    }
-
-    public static double expectedBitsPerLetter(Node root, Map<Node, String> encodingMap) {
-        double sumOfFreqs = 0;
-        double sumOfFreqByBits = 0;
-        for (Node node : encodingMap.keySet()) {
-            sumOfFreqs += node.freq;
-
-            double bits = encodingMap.get(node).length();
-            sumOfFreqByBits += node.freq * bits;
-        }
-
-        return sumOfFreqByBits/sumOfFreqs;
     }
 
     public static void findEncodings(Node root, String encoding, Map<Node, String> map) {
@@ -144,26 +129,31 @@ public class Huffman {
         findEncodings(root.right, encoding + "1", map);
     }
 
+    public static double expectedBitsPerLetter(Node root, Map<Node, String> encodingMap) {
+        double sumOfFreqs = 0;
+        double sumOfFreqByBits = 0;
+        for (Node node : encodingMap.keySet()) {
+            sumOfFreqs += node.freq;
+            double bits = encodingMap.get(node).length();
+            sumOfFreqByBits += node.freq * bits;
+        }
+        return sumOfFreqByBits/sumOfFreqs;
+    }
+
     public static double entropy(Set<Node> nodes) {
         double sumOfFreqs = 0;
         for (Node node : nodes) {
             sumOfFreqs += node.freq;
         }
-
         double entropy = 0;
         for (Node node : nodes) {
             entropy += (node.freq/sumOfFreqs) * log2(sumOfFreqs/node.freq);
         }
-
         return entropy;
     }
 
-    public static double log2(double N)
-    {
-        // calculate log2 N indirectly
-        // using log() method
-        double result = Math.log(N) / Math.log(2);
-  
-        return result;
+    private static double log2(double N) {
+        // calculate log2 N indirectly using log() method
+        return Math.log(N) / Math.log(2);
     }
 }

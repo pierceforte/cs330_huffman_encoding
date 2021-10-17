@@ -1,20 +1,11 @@
 import java.io.FileOutputStream;
-import java.io.IOError;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.*;
 
 public class HuffmanDriver {
     public static void main(String[] args) {
-
-        /**
-         * Conduct any experiment here;
-         * below are some starter examples;
-         * no need to submit the experiments!
-         */
-        
-         Map<Character, Double> input = new HashMap<>() {{
+        Map<Character, Double> input = new HashMap<>() {{
             put('_', 18.3); put('r', 4.8);  put('y', 1.6);
             put('e', 10.2); put('d', 3.5);  put('p', 1.6);
             put('t', 7.7);  put('l', 3.4);  put('b', 1.3);
@@ -27,30 +18,33 @@ public class HuffmanDriver {
         }};
         
         Huffman.Node encodingRoot = Huffman.encode(input);
-
-        try {
-            OutputStream outputStream = new FileOutputStream("huffman_tree.txt");
-            OutputStreamWriter out = new OutputStreamWriter(outputStream);
-            encodingRoot.printTree(out);
-            out.close();
-        } catch (Exception e) {
-            System.out.println(e.toString());
-        }
+        writeTreeFile(encodingRoot, "huffman_tree.txt");
 
         Map<Huffman.Node, String> encodingMap = new HashMap<>();
         Huffman.findEncodings(encodingRoot, "", encodingMap);
-        
-        List<Huffman.Node> sortedNodes = new ArrayList<>(encodingMap.keySet());
-
-        Collections.sort(sortedNodes, (a, b) -> encodingMap.get(a).length() - encodingMap.get(b).length());
-
-        for (Huffman.Node node : sortedNodes) {
-            System.out.println(node.data + ": " + encodingMap.get(node));
-        }
+        printEncodings(encodingMap);
 
         System.out.printf("Expected bits per letter: %f\n", Huffman.expectedBitsPerLetter(encodingRoot, encodingMap));
 
         System.out.printf("Entropy: %f\n", Huffman.entropy(encodingMap.keySet()));
+    }
 
+    private static void writeTreeFile(Huffman.Node root, String filePath) {
+        try {
+            OutputStream outputStream = new FileOutputStream(filePath);
+            OutputStreamWriter out = new OutputStreamWriter(outputStream);
+            root.printTree(out);
+            out.close();
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
+    }
+
+    private static void printEncodings(Map<Huffman.Node, String> encodingMap) {
+        List<Huffman.Node> sortedNodes = new ArrayList<>(encodingMap.keySet());
+        Collections.sort(sortedNodes, (a, b) -> encodingMap.get(a).length() - encodingMap.get(b).length());
+        for (Huffman.Node node : sortedNodes) {
+            System.out.println(node.data + ": " + encodingMap.get(node));
+        }
     }
 }
